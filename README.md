@@ -17,8 +17,8 @@ This Python script fetches data from the [Rick and Morty API](https://rickandmor
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone git@github.com:khdarii/rick-and-morty-connector.git
+   cd rick-and-morty-connector
    ```
 
 2. Install dependencies:
