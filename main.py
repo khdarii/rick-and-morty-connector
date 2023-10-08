@@ -32,7 +32,7 @@ class Logger:
     async def filter_episodes_by_date(episodes, start_date, end_date):
         """Filters episodes based on air date, characters, and a date range."""
         filtered_episodes = [episode for episode in episodes
-                             if start_date <= DateConverter.convert_api_date(episode['air_date']) <= end_date
+                             if start_date <= await DateConverter.convert_api_date(episode['air_date']) <= end_date
                              and 'characters' in episode and len(episode['characters']) > 3]
         return filtered_episodes
 
@@ -63,7 +63,7 @@ class Logger:
 
 class DateConverter:
     @staticmethod
-    def convert_api_date(api_date):
+    async def convert_api_date(api_date):
         """Converts API date to a datetime object."""
         date_formats = ["%B %d, %Y", "%Y-%m-%d"]
 
@@ -119,9 +119,9 @@ class RickAndMortyConnector:
 
     async def run(self):
         await asyncio.gather(
-            self.fetch_and_process_characters(),
             self.fetch_and_process_locations(),
-            self.fetch_and_process_episodes()
+            self.fetch_and_process_characters(),
+            self.fetch_and_process_episodes(),
         )
 
 
