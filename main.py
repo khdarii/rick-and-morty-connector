@@ -3,11 +3,12 @@ import json
 from uuid import uuid4
 from urllib.parse import urljoin
 from datetime import datetime
+import asyncio
 
 
 class Fetcher:
     @staticmethod
-    def fetch_data(url):
+    async def fetch_data(url):
         """Fetches data from the specified URL and returns the JSON response."""
         response = requests.get(url)
         return response.json()
@@ -15,7 +16,7 @@ class Fetcher:
 
 class DataProcessor:
     @staticmethod
-    def process_and_write(data, filename_prefix):
+    async def process_and_write(data, filename_prefix):
         """Processes data and writes it to JSON files."""
         for item in data:
             processed_data = {
@@ -23,12 +24,12 @@ class DataProcessor:
                 'Metadata': item['name'],
                 'RawData': item
             }
-            write_to_json(f"{filename_prefix}_{item['id']}.json", processed_data)
+            await write_to_json(f"{filename_prefix}_{item['id']}.json", processed_data)
 
 
 class Logger:
     @staticmethod
-    def filter_episodes_by_date(episodes, start_date, end_date):
+    async def filter_episodes_by_date(episodes, start_date, end_date):
         """Filters episodes based on air date, characters, and a date range."""
         filtered_episodes = [episode for episode in episodes
                              if start_date <= DateConverter.convert_api_date(episode['air_date']) <= end_date
@@ -36,7 +37,7 @@ class Logger:
         return filtered_episodes
 
     @staticmethod
-    def log_episodes(episodes, start_year=2017, end_year=2021):
+    async def log_episodes(episodes, start_year=2017, end_year=2021):
         """Logs episodes meeting specified criteria."""
         try:
             start_date = datetime(start_year, 1, 1)
@@ -47,13 +48,13 @@ class Logger:
             print(f"Error: {e}")
             return
 
-        filtered_episodes = Logger.filter_episodes_by_date(episodes, start_date, end_date)
+        filtered_episodes = await Logger.filter_episodes_by_date(episodes, start_date, end_date)
 
         print("Episodes meeting the criteria:")
         print([episode['name'] for episode in filtered_episodes])
 
     @staticmethod
-    def log_odd_locations(locations):
+    async def log_odd_locations(locations):
         """Logs locations that appear only on odd episode numbers."""
         log_locations = [location['name'] for i, location in enumerate(locations, start=1) if i % 2 != 0]
         print("\nLocations that appear only on odd episode numbers:")
@@ -76,7 +77,7 @@ class DateConverter:
         return None
 
 
-def write_to_json(filename, data):
+async def write_to_json(filename, data):
     """Writes data to a JSON file."""
     with open(filename, 'w') as file:
         json.dump(data, file, indent=2)
@@ -89,36 +90,41 @@ class RickAndMortyConnector:
         self.locations_url = urljoin(self.api_base_url, 'location')
         self.episodes_url = urljoin(self.api_base_url, 'episode')
 
+    async def fetch_and_process_characters(self):
+        all_characters = await self.fetch_all_data(self.characters_url)
+        await DataProcessor.process_and_write(all_characters, 'character')
+
+    async def fetch_and_process_locations(self):
+        all_locations = await self.fetch_all_data(self.locations_url)
+        await DataProcessor.process_and_write(all_locations, 'location')
+        await Logger.log_odd_locations(all_locations)
+        # You can log or process locations as needed
+
+    async def fetch_and_process_episodes(self):
+        all_episodes = await self.fetch_all_data(self.episodes_url)
+        await DataProcessor.process_and_write(all_episodes, 'episode')
+        await Logger.log_episodes(all_episodes)
+
     @staticmethod
-    def fetch_all_data(base_url):
-        """Fetches all data from a paginated API endpoint."""
+    async def fetch_all_data(base_url):
         all_data = []
         next_page = base_url
 
         while next_page:
-            data_page = Fetcher.fetch_data(next_page)
+            data_page = await Fetcher.fetch_data(next_page)
             all_data.extend(data_page['results'])
             next_page = data_page['info']['next']
 
         return all_data
 
-    def run(self):
-        # Fetch all characters
-        all_characters = self.fetch_all_data(self.characters_url)
-        DataProcessor.process_and_write(all_characters, 'character')
-        Logger.log_odd_locations(all_characters)
-
-        # Fetch all locations
-        all_locations = self.fetch_all_data(self.locations_url)
-        DataProcessor.process_and_write(all_locations, 'location')
-        # You can log or process locations as needed
-
-        # Fetch all episodes
-        all_episodes = self.fetch_all_data(self.episodes_url)
-        DataProcessor.process_and_write(all_episodes, 'episode')
-        Logger.log_episodes(all_episodes)
+    async def run(self):
+        await asyncio.gather(
+            self.fetch_and_process_characters(),
+            self.fetch_and_process_locations(),
+            self.fetch_and_process_episodes()
+        )
 
 
 if __name__ == "__main__":
     connector = RickAndMortyConnector()
-    connector.run()
+    asyncio.run(connector.run())
