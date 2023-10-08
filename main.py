@@ -65,14 +65,16 @@ class DateConverter:
     @staticmethod
     def convert_api_date(api_date):
         """Converts API date to a datetime object."""
-        try:
-            return datetime.strptime(api_date, "%Y-%m-%d")
-        except ValueError:
+        date_formats = ["%Y-%m-%d", "%B %d, %Y"]
+
+        for date_format in date_formats:
             try:
-                return datetime.strptime(api_date, "%B %d, %Y")
+                return datetime.strptime(api_date, date_format)
             except ValueError:
-                print(f"Unable to parse date: {api_date}")
-                return None
+                pass
+
+        print(f"Unable to parse date: {api_date}")
+        return None
 
 
 def write_to_json(filename, data):
