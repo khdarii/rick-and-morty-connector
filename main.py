@@ -31,8 +31,7 @@ class Logger:
     def filter_episodes_by_date(episodes, start_date, end_date):
         """Filters episodes based on air date, characters, and a date range."""
         filtered_episodes = [episode for episode in episodes
-                             if 'air_date' in episode
-                             and start_date <= DateConverter.convert_api_date(episode['air_date']) <= end_date
+                             if start_date <= DateConverter.convert_api_date(episode['air_date']) <= end_date
                              and 'characters' in episode and len(episode['characters']) > 3]
         return filtered_episodes
 
@@ -107,7 +106,6 @@ class RickAndMortyConnector:
         # Fetch all characters
         all_characters = self.fetch_all_data(self.characters_url)
         DataProcessor.process_and_write(all_characters, 'character')
-        Logger.log_episodes(all_characters)
         Logger.log_odd_locations(all_characters)
 
         # Fetch all locations
