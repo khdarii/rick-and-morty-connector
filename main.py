@@ -65,7 +65,7 @@ class DateConverter:
     @staticmethod
     def convert_api_date(api_date):
         """Converts API date to a datetime object."""
-        date_formats = ["%Y-%m-%d", "%B %d, %Y"]
+        date_formats = ["%B %d, %Y", "%Y-%m-%d"]
 
         for date_format in date_formats:
             try:
@@ -90,7 +90,8 @@ class RickAndMortyConnector:
         self.locations_url = urljoin(self.api_base_url, 'location')
         self.episodes_url = urljoin(self.api_base_url, 'episode')
 
-    def fetch_all_data(self, base_url):
+    @staticmethod
+    def fetch_all_data(base_url):
         """Fetches all data from a paginated API endpoint."""
         all_data = []
         next_page = base_url
