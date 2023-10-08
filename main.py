@@ -1,9 +1,10 @@
-import requests
-import json
-from uuid import uuid4
-from urllib.parse import urljoin
-from datetime import datetime
 import asyncio
+import json
+from datetime import datetime
+from urllib.parse import urljoin
+from uuid import uuid4
+
+import requests
 
 
 class Fetcher:
